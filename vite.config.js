@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [vue()],
   base: '/hmm3-cmlike/',
   build: {
-    outDir: 'docs'
+    outDir: 'dist'
   },
   resolve: {
     alias: {
