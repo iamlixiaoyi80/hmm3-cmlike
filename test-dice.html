@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>H3-CMlike 骰子测试</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #1a1a2a 0%, #16213e 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      text-align: center;
+      color: white;
+    }
+    h1 { font-size: 2rem; margin-bottom: 20px; }
+    .test-section {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 20px;
+      margin: 20px 0;
+    }
+    .status { 
+      font-size: 1.2rem; 
+      margin: 10px 0;
+    }
+    .status.success { color: #4CAF50; }
+    .status.error { color: #f44336; }
+    button {
+      padding: 10px 20px;
+      font-size: 1rem;
+      margin: 5px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #4CAF50;
+      color: white;
+    }
+    button:hover { background: #45a049; }
+    #results {
+      text-align: left;
+      margin-top: 20px;
+    }
+    .result-item {
+      padding: 5px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎲 H3-CMlike 骰子测试</h1>
+    
+    <div class="test-section">
+      <p class="status">准备测试...</p>
+      <button onclick="testBasicRoll()">测试基础掷骰</button>
+      <button onclick="testAllDiceTypes()">测试所有骰子类型</button>
+      <button onclick="testRapidRolls()">快速掷骰测试</button>
+    </div>
+    
+    <div id="results"></div>
+  </div>
+
+  <script type="module">
+    // 模拟骰子逻辑
+    const results = [];
+    
+    function addResult(text, success = true) {
+      const div = document.createElement('div');
+      div.className = 'result-item';
+      div.style.color = success ? '#4CAF50' : '#f44336';
+      div.textContent = text;
+      document.getElementById('results').prepend(div);
+    }
+    
+    function testBasicRoll() {
+      addResult('🎲 测试基础掷骰...');
+      const result = Math.floor(Math.random() * 6) + 1;
+      addResult(`✅ 厷骰结果: ${result}`);
+    }
+    
+    function testAllDiceTypes() {
+      const types = ['普通(白)', '黄金(金)', '攻击(红)', '盾牌(蓝)'];
+      types.forEach(type => {
+        const result = Math.floor(Math.random() * 6) + 1;
+        addResult(`✅ ${type}骰子: ${result}`);
+      });
+    }
+    
+    function testRapidRolls() {
+      addResult('🎲 快速掷骰 10 次...');
+      for (let i = 0; i < 10; i++) {
+        setTimeout(() => {
+          const result = Math.floor(Math.random() * 6) + 1;
+          addResult(`✅ 第 ${i+1} 次: ${result}`);
+        }, i * 100);
+      }
+    }
+    
+    // 页面加载完成
+    document.querySelector('.status').textContent = '✅ 测试环境就绪';
+    document.querySelector('.status').classList.add('success');
+  </script>
+</body>
+</html>

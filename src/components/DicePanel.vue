@@ -1,83 +1,162 @@
 <template>
   <div class="dice-panel">
-    <div class="dice-container" @click="handleDiceClick">
-      <div 
-        class="dice" 
+    <!-- 骰子容器 -->
+    <div class="dice-wrapper" :class="{ shaking: isShaking }">
+      <Dice3D 
+        ref="dice3DRef"
+        :state="animationState"
+        :type="diceType"
+        :result="result"
+        @click="handleDiceClick"
+      />
+      
+      <!-- 特效层 -->
+      <DiceEffects 
+        ref="effectsRef"
+        :state="animationState"
+        :result="result"
+        :type="diceType"
+        @effect-complete="onEffectComplete"
+      />
+    </div>
+    
+    <!-- 骰子信息 -->
+    <div class="dice-info">
+      <p class="dice-count">
+        <span class="icon">🎲</span>
+        骰子: {{ diceCount }}
+      </p>
+      <p v-if="result" class="last-result">
+        上次结果: <span :class="diceType">{{ result }}</span>
+      </p>
+    </div>
+    
+    <!-- 操作按钮 -->
+    <div class="controls">
+      <button 
+        class="roll-btn"
         :class="{ rolling: isRolling }"
-        :style="diceStyle"
+        :disabled="diceCount <= 0 && !isRolling"
+        @click="handleButtonClick"
       >
-        {{ displayNumber }}
+        <span v-if="isRolling">🎯 点击停止!</span>
+        <span v-else>🎲 掷骰子</span>
+      </button>
+      
+      <!-- 骰子类型选择（测试用） -->
+      <div class="dice-type-selector">
+        <button 
+          v-for="type in diceTypes" 
+          :key="type.value"
+          class="type-btn"
+          :class="[type.value, { active: diceType === type.value }]"
+          @click="diceType = type.value"
+          :title="type.label"
+        >
+          {{ type.icon }}
+        </button>
       </div>
     </div>
-    
-    <div class="dice-info">
-      <p>骰子数量: {{ diceCount }}</p>
-      <p v-if="lastResult">结果: {{ lastResult }}</p>
-    </div>
-    
-    <button 
-      class="roll-btn" 
-      @click="startRoll"
-      :disabled="diceCount <= 0"
-    >
-      {{ isRolling ? '点击停止!' : '掷骰子' }}
-    </button>
   </div>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useGameStore } from '../stores/game'
+import Dice3D from './dice/Dice3D.vue'
+import DiceEffects from './dice/DiceEffects.vue'
+import { useDiceAnimation, DiceState, DiceType } from '../composables/useDiceAnimation'
 
 const store = useGameStore()
+const dice3DRef = ref(null)
+const effectsRef = ref(null)
+const isShaking = ref(false)
 
-const isRolling = ref(false)
-const displayNumber = ref(1)
-const animationInterval = ref(null)
+const {
+  state: animationState,
+  result,
+  diceType,
+  isRolling,
+  throwDice,
+  stopDice,
+  reset,
+  vibrate
+} = useDiceAnimation()
 
 const diceCount = computed(() => store.dice.count)
-const lastResult = computed(() => store.dice.lastResult)
 
-const diceStyle = computed(() => ({
-  transform: isRolling.value ? 'rotate(720deg)' : 'rotate(0deg)',
-  transition: isRolling.value ? 'transform 0.1s ease' : 'transform 0.3s ease'
-}))
+// 骰子类型列表（测试用）
+const diceTypes = [
+  { value: 'normal', label: '普通', icon: '⚪' },
+  { value: 'golden', label: '黄金', icon: '🟡' },
+  { value: 'attack', label: '攻击', icon: '🔴' },
+  { value: 'shield', label: '盾牌', icon: '🔵' }
+]
 
-// 开始掷骰子
-function startRoll() {
-  if (diceCount.value <= 0) return
-  
-  isRolling.value = true
-  store.useDice(1)
-  
-  // 快速切换数字
-  animationInterval.value = setInterval(() => {
-    displayNumber.value = Math.floor(Math.random() * 6) + 1
-  }, 50)
+// 处理骰子点击
+async function handleDiceClick() {
+  if (isRolling.value) {
+    await stopRoll()
+  }
 }
 
-// 停止骰子
-function stopRoll() {
-  if (!isRolling.value) return
-  
-  clearInterval(animationInterval.value)
-  
-  // 最终结果
-  const result = Math.floor(Math.random() * 6) + 1
-  displayNumber.value = result
-  store.dice.lastResult = result
-  
-  isRolling.value = false
-  
-  // 触发事件
-  console.log('🎲 骰子结果:', result)
-}
-
-// 点击处理
-function handleDiceClick() {
+// 处理按钮点击
+function handleButtonClick() {
   if (isRolling.value) {
     stopRoll()
+  } else {
+    startRoll()
   }
+}
+
+// 开始掷骰子
+async function startRoll() {
+  if (diceCount.value <= 0 || isRolling.value) return
+  
+  // 消耗骰子
+  store.useDice(1)
+  
+  // 震动反馈
+  vibrate('light')
+  
+  // 屏幕震动
+  isShaking.value = true
+  setTimeout(() => {
+    isShaking.value = false
+  }, 200)
+  
+  // 执行动画
+  if (dice3DRef.value?.cubeRef) {
+    const finalResult = await throwDice(dice3DRef.value.cubeRef)
+    if (finalResult) {
+      store.dice.lastResult = finalResult
+    }
+  }
+}
+
+// 停止掷骰子
+async function stopRoll() {
+  if (!isRolling.value) return
+  
+  if (dice3DRef.value?.cubeRef) {
+    const finalResult = await stopDice(dice3DRef.value.cubeRef)
+    if (finalResult) {
+      store.dice.lastResult = finalResult
+    }
+  }
+}
+
+// 特效完成回调
+function onEffectComplete() {
+  console.log('🎲 骰子结果:', result.value, '类型:', diceType.value)
+  
+  // 这里可以触发后续逻辑（如地图事件）
+  // emit('dice-result', { result: result.value, type: diceType.value })
+  
+  // 重置状态
+  setTimeout(() => {
+    reset()
+  }, 500)
 }
 </script>
 
@@ -93,41 +172,23 @@ function handleDiceClick() {
   backdrop-filter: blur(10px);
 }
 
-.dice-container {
-  width: 120px;
-  height: 120px;
+.dice-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
 }
 
-.dice {
-  width: 100px;
-  height: 100px;
-  background: linear-gradient(145deg, #ffffff, #e6e6e6);
-  border-radius: 15px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 48px;
-  font-weight: bold;
-  color: #333;
-  box-shadow: 
-    0 10px 30px rgba(0, 0, 0, 0.3),
-    inset 0 2px 5px rgba(255, 255, 255, 0.5);
-  user-select: none;
-}
-
-.dice.rolling {
-  animation: shake 0.1s infinite;
-  background: linear-gradient(145deg, #ffd700, #ff8c00);
-  color: #fff;
+.dice-wrapper.shaking {
+  animation: shake 0.2s ease;
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(-2px) rotate(-5deg); }
-  50% { transform: translateX(2px) rotate(5deg); }
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
 }
 
 .dice-info {
@@ -140,6 +201,50 @@ function handleDiceClick() {
   font-size: 16px;
 }
 
+.dice-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.icon {
+  font-size: 24px;
+}
+
+.last-result span {
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.last-result span.normal {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.last-result span.golden {
+  background: rgba(255, 215, 0, 0.3);
+  color: #ffd700;
+}
+
+.last-result span.attack {
+  background: rgba(255, 68, 68, 0.3);
+  color: #ff4444;
+}
+
+.last-result span.shield {
+  background: rgba(68, 136, 255, 0.3);
+  color: #4488ff;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  align-items: center;
+}
+
 .roll-btn {
   padding: 15px 40px;
   font-size: 18px;
@@ -150,6 +255,7 @@ function handleDiceClick() {
   border-radius: 10px;
   cursor: pointer;
   transition: all 0.3s ease;
+  min-width: 150px;
 }
 
 .roll-btn:hover:not(:disabled) {
@@ -160,5 +266,56 @@ function handleDiceClick() {
 .roll-btn:disabled {
   background: #666;
   cursor: not-allowed;
+}
+
+.roll-btn.rolling {
+  background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+  animation: pulse 0.5s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.dice-type-selector {
+  display: flex;
+  gap: 10px;
+}
+
+.type-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 20px;
+}
+
+.type-btn:hover {
+  transform: scale(1.1);
+}
+
+.type-btn.active {
+  border-color: #fff;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
+}
+
+.type-btn.normal.active {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.type-btn.golden.active {
+  background: rgba(255, 215, 0, 0.3);
+}
+
+.type-btn.attack.active {
+  background: rgba(255, 68, 68, 0.3);
+}
+
+.type-btn.shield.active {
+  background: rgba(68, 136, 255, 0.3);
 }
 </style>
