@@ -1,14 +1,14 @@
 # H3-CMlike 开发状态
 
-> 更新时间：2026-03-18 08:30 UTC
+> 更新时间：2026-03-18 09:30 UTC
 > 工作时段：08:00 - 21:00（每30分钟一轮）
 
 ## 当前进度
 
 | 模块 | 设计 | 开发 | 测试 | 上传 | 部署 |
 |------|:----:|:----:|:----:|:----:|:----:|
-| 1. 骰子 Juice | ✅ | ✅ | ✅ | ⏳ | ⬜ |
-| 2. 地图事件 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
+| 1. 骰子 Juice | ✅ | ✅ | ✅ | ✅ | ✅ |
+| 2. 地图事件 | ✅ | ⏳ | ⬜ | ⬜ | ⬜ |
 | 3. 城堡建设 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 4. 生物系统 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
 | 5. 英雄系统 | ⬜ | ⬜ | ⬜ | ⬜ | ⬜ |
@@ -17,56 +17,50 @@
 
 ## 当前阶段
 
-**模块：** 骰子 Juice 反馈
-**阶段：** 📤 准备上传 GitHub
-**测试结果：** ✅ 12/12 通过
+**模块：** 地图事件系统
+**阶段：** 🚧 开发中
+**开始时间：** 09:30
 
-## 测试报告
+## 模块2 设计定稿
 
+### 技术方案
+| 决策点 | 方案 |
+|--------|------|
+| 地图布局 | 环形固定路线（40格） |
+| 渲染方式 | Phaser 3 |
+| 移动机制 | 简化版（无角色移动动画） |
+| 事件触发 | 掷骰子后立即触发 |
+| UI 布局 | 垂直分屏（地图70% + UI30%） |
+
+### 事件类型（MVP优先）
+1. 资源地格（25%）- 金币/木材/矿石/水晶
+2. 生物地格（15%）- 获得种族生物
+3. 宝物地格（10%）- 获得宝物
+4. 宝箱地格（10%）- 经验 vs 金币二选一
+
+### 组件结构
 ```
-Running 12 tests using 1 worker
-
-  ✓   1 [chromium] › 页面应该能正常加载 (1.1s)
-  ✓   2 [chromium] › 应该有掷骰子按钮 (1.1s)
-  ✓   3 [chromium] › 应该显示骰子数量 (973ms)
-  ✓   4 [chromium] › 应该有骰子类型选择器 (927ms)
-  ✓   5 [chromium] › 点击掷骰子按钮应该触发动画 (1.7s)
-  ✓   6 [chromium] › 应该有3D骰子组件 (891ms)
-  ✓   7 [chromium] › 应该有粒子效果组件 (862ms)
-  ✓   8 [chromium] › 掷骰子后应该显示数字弹出 (3.9s)
-  ✓   9 [chromium] › 完整掷骰子流程 (4.5s)
-  ✓  10 [chromium] › 切换骰子类型 (1.2s)
-  ✓  11 [chromium] › 点击骰子可以提前停止 (2.6s)
-  ✓  12 [chromium] › 掷骰子后应该有星星粒子效果 (4.0s)
-
-  12 passed (28.5s)
+src/
+├── game/
+│   └── MapScene.js (Phaser 场景)
+├── components/
+│   ├── MapContainer.vue (Phaser 容器)
+│   └── events/
+│       ├── ResourceEvent.vue
+│       ├── CreatureEvent.vue
+│       ├── TreasureEvent.vue
+│       └── ChestEvent.vue
+└── stores/
+    └── map.js (地图状态)
 ```
-
-## 已创建文件
-
-### Composables
-- ✅ `src/composables/useDiceAnimation.js` - 动画逻辑
-
-### Components
-- ✅ `src/components/dice/Dice3D.vue` - 3D骰子
-- ✅ `src/components/dice/DiceDots.vue` - 点阵渲染
-- ✅ `src/components/dice/DiceEffects.vue` - 特效容器
-- ✅ `src/components/dice/Particles.vue` - 星星粒子效果 ⭐
-- ✅ `src/components/dice/NumberPopup.vue` - 数字弹出
-- ✅ `src/components/DicePanel.vue` - 主面板（已改造）
-
-### Tests
-- ✅ `e2e/dice.spec.js` - E2E测试（12个用例）
-- ✅ `playwright.config.js` - Playwright配置
 
 ---
 
 ## 开发日志
 
-### 2026-03-18 08:30
-- ✅ 完成骰子 Juice 系统开发
-- ✅ 所有测试通过（12/12）
-- 📤 准备上传到 GitHub...
+### 2026-03-18 09:30
+- 开始开发地图事件系统
+- 创建 Phaser 地图场景...
 
 ---
 

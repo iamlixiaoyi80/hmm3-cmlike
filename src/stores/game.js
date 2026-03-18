@@ -22,8 +22,15 @@ export const useGameStore = defineStore('game', {
     player: {
       name: '玩家',
       level: 1,
-      exp: 0
-    }
+      exp: 0,
+      expToNext: 1000
+    },
+    
+    // 生物
+    creatures: {},
+    
+    // 宝物
+    treasures: []
   }),
   
   actions: {
@@ -52,6 +59,34 @@ export const useGameStore = defineStore('game', {
     // 恢复骰子
     restoreDice(count) {
       this.dice.count = Math.min(this.dice.maxCount, this.dice.count + count)
+    },
+    
+    // 添加经验
+    addExp(amount) {
+      this.player.exp += amount
+      // 检查升级
+      while (this.player.exp >= this.player.expToNext) {
+        this.player.exp -= this.player.expToNext
+        this.player.level++
+        this.player.expToNext = Math.floor(this.player.expToNext * 1.5)
+      }
+    },
+    
+    // 添加生物
+    addCreature(type, count) {
+      if (!this.creatures[type]) {
+        this.creatures[type] = 0
+      }
+      this.creatures[type] += count
+    },
+    
+    // 添加宝物
+    addTreasure(rarity) {
+      this.treasures.push({
+        id: Date.now(),
+        rarity,
+        obtainedAt: new Date().toISOString()
+      })
     }
   }
 })

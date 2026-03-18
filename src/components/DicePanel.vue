@@ -150,8 +150,10 @@ async function stopRoll() {
 function onEffectComplete() {
   console.log('🎲 骰子结果:', result.value, '类型:', diceType.value)
   
-  // 这里可以触发后续逻辑（如地图事件）
-  // emit('dice-result', { result: result.value, type: diceType.value })
+  // 触发地图事件
+  window.dispatchEvent(new CustomEvent('dice-result', {
+    detail: { result: result.value, type: diceType.value }
+  }))
   
   // 重置状态
   setTimeout(() => {
